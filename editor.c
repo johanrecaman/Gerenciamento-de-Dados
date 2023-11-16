@@ -1,24 +1,64 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(){
+typedef struct Node {
+    char cpf[12];
+    char nome[100];
+    struct Node *next;
+} Node;
+
+void printList(Node *head) {
+    Node *current = head;
+    while (current != NULL) {
+        printf("%s, %s\n", current->cpf, current->nome);
+        current = current->next;
+    }
+}
+
+int main() {
     FILE *bin;
-    int *buffer;
-    size_t size;
+    Node *head = NULL;
+    Node *current = NULL;
 
-    bin = fopen("exemplo.bin", "rb");
+    bin = fopen("output.bin", "rb");
+    if (!bin) {
+        perror("Error opening binary file");
+        return 1;
+    }
 
-    fseek(bin, 0, SEEK_END);
-    size = ftell(bin);
-    rewind(bin);
+    while (1) {
+        Node *newNode = malloc(sizeof(Node));
+        if (!newNode) {
+            perror("Memory allocation error");
+            return 1;
+        }
 
-    size_t bytesRead = fread(buffer, 1, size, bin);
+        if (fread(newNode->cpf, sizeof(char), sizeof(newNode->cpf), bin) != sizeof(newNode->cpf) ||
+            fread(newNode->nome, sizeof(char), sizeof(newNode->nome), bin) != sizeof(newNode->nome)) {
+            free(newNode);
+            break; 
+        }
 
-    
-    printf("%d", buffer[0]);
+        newNode->next = NULL;
 
-    free(buffer);
+        if (head == NULL) {
+            head = newNode;
+            current = newNode;
+        } else {
+            current->next = newNode;
+            current = newNode;
+        }
+    }
+
     fclose(bin);
+
+    printList(head);
+
+    while (head != NULL) {
+        Node *temp = head;
+        head = head->next;
+        free(temp);
+    }
 
     return 0;
 }
